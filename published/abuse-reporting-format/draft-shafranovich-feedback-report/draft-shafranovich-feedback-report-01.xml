@@ -1,0 +1,1119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM 'rfc2629.dtd']>
+
+<!-- may be omitted for very short documents --> 
+<?rfc toc="yes"?>
+<?rfc sortrefs="yes"?>
+
+<!-- these two save paper: start new sections from the same page etc. -->
+<?rfc compact="yes"?> <?rfc subcompact="no"?>
+
+<!-- other categories: bcp, exp, historic, std -->
+<rfc ipr="full3978" category="std" docName="draft-shafranovich-feedback-report-01.txt">
+
+<front>
+	<title abbrev="Format for Feedback Reports">An Extensible Format for Email Feedback Reports</title>
+	<author fullname="Yakov Shafranovich" initials="Y." surname="Shafranovich">
+		<organization>SolidMatrix Technologies, Inc.</organization>
+		<address>
+			<postal/>
+			<email>ietf@shaftek.org</email>
+			<uri>http://www.shaftek.org</uri>
+		</address>
+	</author>
+	<date month="May" day="13" year="2005"/>
+	<keyword>spam</keyword>
+	<keyword>abuse</keyword>
+
+	<abstract>
+		<t>This document defines an extensible format and MIME type that may be used by network operators to report
+		feedback about received email to other parties. This format is intended as a machine readable replacement for various existing report formats currently used in Internet email.</t>
+	</abstract>
+</front>
+
+<middle>
+<section title="Introduction">
+	<t>As the spam problem has grown in the past few years, network operators have begun to exchange abuse reports
+	among themselves and other parties to combat this problem. However, different operators define their own formats
+	and the receivers are forced to write custom software to interpret the many types of them. In addition, many operators use various other report formats to provide non-abuse feedback about processed email. This memo seeks to define a standard extensible format and the "message/feedback-report" MIME type for these reports in accordance with <xref target="RFC2048">RFC 2048</xref>. This format and content type is intended to be used within the scope of the framework of the "multipart/report" content type defined in <xref target="RFC3462">RFC 3462</xref>. While there have been previous work in this area(<xref target="STRADS_BCP"/> and <xref target="ASRG_ABUSE"/>), none of them have yet been sucessful. It is hoped that this document will have a better fate.
+	</t>
+	
+	<t>This format is intended primarily as an Abuse Reporting Format (ARF) for reporting email abuse but also includes support for feedback loops, virus reports and other similar activities.</t>
+
+	<t>This document only defines the format and content type to be used for these reports. Determination of where
+	these reports should be sent, how trust among report senders and receivers is established, and reports related to more than one message are outside the scope of this document.
+	</t>
+	
+	<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119">RFC 2119</xref>.
+	</t>
+	
+	<t>NOTE: This document may be incomplete and is intented to evolve based on public discussion and feedback. Readers are encourages to submit their comments and suggestions.</t>
+</section>
+
+<section title="Intent">
+	<t>The reports defined in this document are intended for several purposes:
+	<list style="symbols">	
+		<t>To inform ISPs about email abuse originating from or related to their networks</t>
+		<t>To provide feedback about abuse complaints to email service providers and relevant third parties (such as reputation providers)</t>
+		<t>To inform email service provides about opt-out requests</t>
+	</list>
+	</t>
+
+	<t>Please note that while the parent "multipart/report" content type defined in <xref target="RFC3462">RFC 3462</xref> is used for all kinds of administrative messages, this format is intended specifically for communications among providers regarding email abuse and related issues, and SHOULD NOT be used for other reports.
+	</t>
+</section>
+
+<section title="Requirements">
+	<t>The following requirements are necessary for feedback reports (the actual standard is defined in the next sections) :
+	<list style="symbols">	
+		<t>They must be both human and machine readable</t>
+		<t>A copy of the original email message (body and headers) or the message headers must be enclosed in order to allow the receiver to properly handle the report.
+		</t>
+		<t>The machine readable section must provide ability for the report generators to share metadata with receivers,</t>
+		<t>The format must be extensible.</t>
+	</list>
+	</t>
+</section>
+
+<section title="Format of Email Feedback Reports">
+	<t>To satisfy the requirements, an email feedback report is defined as a MIME message with a top level MIME content type of "multipart/report" (as defined in <xref target="RFC3462">RFC 3462</xref>). The following apply:
+	<list style="letters">	
+		<t>The "report-type" parameter of "multipart/report" type is set to "feedback-report"</t>
+		<t>The first MIME part of the message contains a human readable description of the report and MUST be included.</t>
+		<t>The second MIME part of the message is a machine-readable section with the content type
+		of "message/feedback-report" (defined later on in this document) and MUST be included. This section is intended to convey metadata about the report in question that may not be readily available from the included email message itself.
+		</t>
+		<t>The third MIME part of the message contains either a full copy of the original message with a MIME content type
+		of "message/rfc822" (as defined in <xref target="RFC2046">RFC 2046</xref>) OR a copy of
+		the headers from the original message with MIME content type of "text/rfc822-headers"
+		(as defined in <xref target="RFC3462">RFC 3462</xref>). This part MUST BE included (unlike <xref target="RFC3462">RFC 3462</xref>). While some operators may choose to modify or munge this portion for privacy or legal reasons, it is RECOMMENDED that the entire original email message be included without any modification.
+		</t>
+		<t>Each feedback report MUST be related to only a SINGLE email message. Summary and aggregate formats are outside the scope of this specification.</t>
+		<t>The subject line of the feedback report SHOULD be the same as the included email message and MAY include only the standard forwarding prefix used by MUAs such as "FW:" (many smaller operators using MUAs for abuse handling rely on the subject lines for processing).
+		</t>
+	</list>
+	</t>
+</section>
+
+<section title="Format of 'message/feedback-report' Content Type">
+	<t>This content type provides a machine-readable section intended to let the report generator convey metadata to the report receiver. The intent of this section is it allow report generators to convey metadata to report receivers that may not available or may not be readily available from the originating email message or headers.
+	</t>
+	<t> The body of this content type consists of multiple "fields" formatted according to the ABNF of <xref target="RFC0822">RFC 822</xref> header "fields". This section defines the initial set of fields provided by this specification. Additional fields maybe registered according to the procedure described later on in this document. Note that these fields represent information that the receiver is asserting about the report in question, but are not necessarily verifiable. Report receivers MUST NOT assume that these assertions are always true.
+	</t>
+	<section title="Required Fields">
+	<t>The following header fields are REQUIRED and MUST only appear once:
+	<list style="symbols">
+		<t>"Feedback-Type:" - contains the type of feedback report (as defined in the corresponding IANA registry). This is intended to let report generators distinguish among different types of reports.</t>
+		<t>"User-Agent:" - indicates the name and version of the software program that generated the report. The format of this field MUST follow section 14.43 of <xref target="RFC2616">RFC 2616</xref>.</t>
+		<t>"Version" - indicates the version of specification that the report generator is using to generate the report. The version number in this specification is set to "0.1".</t>
+	</list>
+	</t>
+	</section>
+	<section title="Optional Fields Appearing Once">
+	<t>The following header fields are OPTIONAL and MUST NOT appear more than once:
+	<list style="symbols">
+		<t>"Original-Mail-From:" - copy of the email address used in the MAIL FROM portion of the original SMTP transaction. The format of this field is defined in section 4.1.1.2 of <xref target="RFC2821">RFC 2821</xref>.</t>
+		<t>"Original-Rcpt-To:" - copy of the email address used in the RCPT TO portion of the original SMTP transaction. The format of this field is defined in section 4.1.1.3 of <xref target="RFC2821">RFC 2821</xref>.</t>
+		<t>"Received-Date:" - indicates the date the original message was received by the report generator. This field MUST BE formatted as per section 3.3 of <xref target="RFC2822">RFC 2822</xref>.</t>
+		<t>"Source-IP:" - contains an IPv4 or IPv6 address of the MTA from which the original message was received. IPv4 addresses are to be formatted in dot-decimal notation as currently used by the community. IPv6 addresses MUST BE formatted as per section 2.2 of <xref target="RFC2373">RFC 2373</xref>.</t>
+	</list>
+	</t>
+	</section>
+	<section title="Optional Fields Appearing Multiple Times">
+	<t>The following set of header fields are OPTIONAL and MAY appear more than once:
+	<list style="symbols">
+		<t>"Authentication-Results:" - indicates the result of an authentication check run by the report generator. The format of this field is is defined in <xref target="I-D.kucherawy-sender-auth-header">draft-kucherawy-sender-auth-header</xref>. Report receivers should note that this field only indicates an assertion made by the report generator.</t>
+		<t>"Reported-Domain:" - indicates a domain name that the report generator believes to be relevant to the report. Domain format is defined in section 2.3.1 of <xref target="RFC1035">RFC 1035</xref>.</t>
+		<t>"Reported-URI:" - indicates a URI that the report generator believes to be relevant to the report. URI format is defined in <xref target="RFC2396">RFC 2396</xref>.</t>
+		<t>"Removal-Recipient:" - indicates the email address to be removed from the mailing list (MUST only be used with  "opt-out" and "opt-out-list" types). The format of this field is defined in section 3.4.1 of <xref target="RFC2822">RFC 2822</xref>.</t>
+	</list>
+	</t>
+	</section>
+</section>
+
+<section title="MIME Type Registration of message/feedback-report">
+	<t>This section provides the media type registration application (as 
+	per <xref target="RFC2048">RFC 2048</xref>, which will be submitted to IANA after IESG 
+	approval of this document.</t>
+
+	<t>To: ietf-types@iana.org</t>
+	<t>Subject: Registration of MIME media types message/feedback-report</t>
+	<t>MIME media type name: message</t>
+	<t>MIME subtype name: feedback-report</t>
+	<t>Required parameters: none</t>
+	<t>Optional parameters: none</t>	
+	<t>Encoding considerations:
+		<list style="empty">	
+			<t>"7bit" encoding is sufficient and MUST be used to maintain readability when viewed
+			by non-MIME mail readers.
+			</t>
+		</list>
+	</t>
+	<t>Security considerations:
+		<list style="empty">
+			<t>See the "Security Considerations" of this document.</t>
+		</list>
+	</t>
+	<t>Interoperability considerations: implementors MUST ignore any fields they do not support</t>
+	<t>Published specification: this document</t>
+	<t>Applications which use this media type: Abuse helpdesk software for ISPs</t>
+	<t>Additional information:
+		<list style="empty">
+			<t>Magic number(s): none</t>
+			<t>File extension(s): none</t>
+			<t>Macintosh File Type Code(s): none</t>
+		</list>
+	</t>
+	<t>Person and email address to contact for further information:
+		<list style="empty">
+			<t>Yakov Shafranovich &lt;ietf@shaftek.org&gt;</t>
+		</list>
+	</t>
+	<t>Intended usage: COMMON</t>
+	<t>Author/Change controller: IESG</t>
+</section>
+
+<section title="Extensibility">
+	<t>Like many other formats and protocols, this format may need to be extended overtime to fit the ever changing landscape of the Internet. Therefore, extensibility is being provided via two IANA registries: one for feedback types and a second for header fields. The feedback type registry is to be used in conjunction with the "Feedback-Type" field above. The header name registry is intended for registration of new metadata fields to be used in the machine readable portion (part 2) of this format. Please note that version numbers do not change with new field registrations unless a new specification of this format is published. Also note that all new field registrations can only registered OPTIONAL fields. Any new required fields REQUIRE a new version of this specification to be published.
+	</t>
+	<t>In order to encourage extensibility and interoperability of this format, implementors SHOULD ignore any fields they do not support.</t>
+</section>
+
+<section title="IANA Considerations">
+	<t>After IESG approval, IANA is expected to register MIME type "message/feedback-report"
+	using the application provided in this document and setup two registries: one for header field names and a second for "Feedback-Type" values. This section contains the templates used for registration of new entries in these registries and initial values. New registrations to these two registries MUST have approval by an Designated Expert in accordance with the Expert Review guidelines as described in <xref target="RFC2434">RFC 2434</xref> (the expert should be appointed by the Area Directors of the Applications Area). Any new field registered is considered OPTIONAL unless a new version of this specification is published.</t>
+	<t>For the header name registry, the following MUST be provided in an RFC publication (or Internet draft with IETF consensus or IESG approval) in order to register a new header field name:
+	<list style="numbers">
+		<t>Name of the field being registered</t>
+		<t>Short description of the field</t>
+		<t>Whether the field can appear more than once</t>
+		<t>Which "Feedback-Type" types does this field apply to (or "any")</t>
+		<t>The RFC number (or Internet draft name) in which this header is registered</t>
+	</list>
+	If the header field being registered requires its own IANA registry, than the appropriate registry MUST be properly defined.
+	</t>
+	<t>For the feedback type registry, the following MUST be provided in an RFC publication (or Internet draft with IETF consensus or IESG approval) in order to register a new header field name:
+	<list style="numbers">
+		<t>Name of the feedback type being registered</t>
+		<t>Short description</t>
+		<t>The RFC number (or Internet draft name) in which this feedback type is registered</t>
+	</list>
+	</t>
+	
+	<section title="Initial Values for the Header Names Registry">
+	<t>The data below is populated from this document. The RFC number used for registration of these values is this document.</t>	
+	<t>
+		Field Name: Authentication-Results<vspace blankLines='0'/>
+		Description: results of authentication check<vspace blankLines='0'/>
+		Multiple Appearances: Yes<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Feedback-Type<vspace blankLines='0'/>
+		Description: type of feedback report<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": N/A<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Original-Mail-From<vspace blankLines='0'/>
+		Description: email address used in the MAIL FROM portion of the original SMTP transaction<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Original-Rcpt-To<vspace blankLines='0'/>
+		Description: copy of the email address used in the RCPT TO portion of the original SMTP transaction<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Received-Date<vspace blankLines='0'/>
+		Description: date the original message was received<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Reported-Domain<vspace blankLines='0'/>
+		Description: relevant domain name<vspace blankLines='0'/>
+		Multiple Appearances: Yes<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Reported-URI<vspace blankLines='0'/>
+		Description: relevant URI<vspace blankLines='0'/>
+		Multiple Appearances: Yes<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Removal-Recipient<vspace blankLines='0'/>
+		Description: email address to be removed from the mailing list<vspace blankLines='0'/>
+		Multiple Appearances: Yes<vspace blankLines='0'/>
+		Related "Feedback-Type": opt-out, opt-out-list<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Source-IP<vspace blankLines='0'/>
+		Description: IPv4 or IPv6 address from which the original message was received<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: User-Agent<vspace blankLines='0'/>
+		Description: name and version of the program used<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	<t>
+		Field Name: Version<vspace blankLines='0'/>
+		Description: version of specification used<vspace blankLines='0'/>
+		Multiple Appearances: No<vspace blankLines='0'/>
+		Related "Feedback-Type": any<vspace blankLines='0'/>
+	</t>
+	</section>
+		
+	<section title='Initial values for the "Feedback-Type" registry'>
+	<t>The initial names and descriptions are provided below. The RFC number used for registration of these values is this document.
+	<list style="symbols">
+		<t>abuse - spam or some other kind of email abuse</t>
+		<t>fraud - indicates some kind of fraud or phishing activity.</t>
+		<t>opt-out - a request to opt out from ALL mailing lists from this provider.</t>
+		<t>opt-out-list - a request to opt out from THIS mailing list ONLY.</t>
+		<t>other - any other feedback that doesn't fit into other types.</t>
+		<t>virus - report of a virus found in the originating message</t>
+	</list>
+	</t>
+	</section>
+</section>
+
+<section title="Security Considerations">
+	<t>See section 3 of <xref target="RFC3462">RFC 3462</xref></t>
+</section>
+
+<section title="Acknowledgments">
+	<t>The author would like to thank many of the members of the email community who provided helpful comments and suggestions for this document including many of the participants in ASRG, IETF and MAAWG activities, and all of the members of the abuse-feedback-report public mailing list.</t>
+</section>
+
+</middle>
+<back>
+
+<!-- references split to informative and normative -->
+<references title="Normative References">
+
+<reference anchor='RFC1035'>
+
+<front>
+<title abbrev='Domain Implementation and Specification'>Domain names - implementation and specification</title>
+<author initials='P.' surname='Mockapetris' fullname='P. Mockapetris'>
+<organization>USC/ISI</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<city>Marina del Rey</city>
+<region>CA</region>
+<code>90291</code>
+<country>US</country></postal>
+<phone>+1 213 822 1511</phone></address></author>
+<date year='1987' day='1' month='November' /></front>
+
+<seriesInfo name='STD' value='13' />
+<seriesInfo name='RFC' value='1035' />
+<format type='TXT' octets='125626' target='ftp://ftp.isi.edu/in-notes/rfc1035.txt' />
+</reference>
+
+
+<reference anchor='RFC2821'>
+
+<front>
+<title>Simple Mail Transfer Protocol</title>
+<author initials='J.' surname='Klensin' fullname='J. Klensin'>
+<organization /></author>
+<date year='2001' month='April' /></front>
+
+<seriesInfo name='RFC' value='2821' />
+<format type='TXT' octets='192504' target='ftp://ftp.isi.edu/in-notes/rfc2821.txt' />
+</reference>
+
+<reference anchor='RFC2434'>
+
+<front>
+<title abbrev='Guidelines for IANA Considerations'>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+<author initials='T.' surname='Narten' fullname='Thomas Narten'>
+<organization>IBM Corporation</organization>
+<address>
+<postal>
+<street>3039 Cornwallis Ave.</street>
+<street>PO Box 12195 - BRQA/502</street>
+<street>Research Triangle Park</street>
+<street>NC 27709-2195</street></postal>
+<phone>919-254-7798</phone>
+<email>narten@raleigh.ibm.com</email></address></author>
+<author initials='H.T.' surname='Alvestrand' fullname='Harald Tveit Alvestrand'>
+<organization>Maxware</organization>
+<address>
+<postal>
+<street>Pirsenteret</street>
+<street>N-7005 Trondheim</street>
+<country>Norway</country></postal>
+<phone>+47 73 54 57 97</phone>
+<email>Harald@Alvestrand.no</email></address></author>
+<date year='1998' month='October' />
+<area>General</area>
+<keyword>Internet Assigned Numbers Authority</keyword>
+<keyword>IANA</keyword>
+<abstract>
+<t>
+   Many protocols make use of identifiers consisting of constants and
+   other well-known values. Even after a protocol has been defined and
+   deployment has begun, new values may need to be assigned (e.g., for a
+   new option type in DHCP, or a new encryption or authentication
+   algorithm for IPSec).  To insure that such quantities have consistent
+   values and interpretations in different implementations, their
+   assignment must be administered by a central authority. For IETF
+   protocols, that role is provided by the Internet Assigned Numbers
+   Authority (IANA).
+</t>
+<t>
+   In order for the IANA to manage a given name space prudently, it
+   needs guidelines describing the conditions under which new values can
+   be assigned. If the IANA is expected to play a role in the management
+   of a name space, the IANA must be given clear and concise
+   instructions describing that role.  This document discusses issues
+   that should be considered in formulating a policy for assigning
+   values to a name space and provides guidelines to document authors on
+   the specific text that must be included in documents that place
+   demands on the IANA.
+</t></abstract></front>
+
+<seriesInfo name='BCP' value='26' />
+<seriesInfo name='RFC' value='2434' />
+<format type='TXT' octets='25092' target='ftp://ftp.isi.edu/in-notes/rfc2434.txt' />
+<format type='HTML' octets='37803' target='http://xml.resource.org/public/rfc/html/rfc2434.html' />
+<format type='XML' octets='26924' target='http://xml.resource.org/public/rfc/xml/rfc2434.xml' />
+</reference>
+
+
+<reference anchor='RFC2616'>
+
+<front>
+<title abbrev='HTTP/1.1'>Hypertext Transfer Protocol -- HTTP/1.1</title>
+<author initials='R.' surname='Fielding' fullname='Roy T. Fielding'>
+<organization abbrev='UC Irvine'>Department of Information and Computer Science</organization>
+<address>
+<postal>
+<street>University of California, Irvine</street>
+<city>Irvine</city>
+<region>CA</region>
+<code>92697-3425</code></postal>
+<facsimile>+1(949)824-1715</facsimile>
+<email>fielding@ics.uci.edu</email></address></author>
+<author initials='J.' surname='Gettys' fullname='James Gettys'>
+<organization abbrev='Compaq/W3C'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>jg@w3.org</email></address></author>
+<author initials='J.' surname='Mogul' fullname='Jeffrey C. Mogul'>
+<organization abbrev='Compaq'>Compaq Computer Corporation</organization>
+<address>
+<postal>
+<street>Western Research Laboratory</street>
+<street>250 University Avenue</street>
+<city>Palo Alto</city>
+<region>CA</region>
+<code>94305</code></postal>
+<email>mogul@wrl.dec.com</email></address></author>
+<author initials='H.' surname='Frystyk' fullname='Henrik Frystyk Nielsen'>
+<organization abbrev='MIT/LCS'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>frystyk@w3.org</email></address></author>
+<author initials='L.' surname='Masinter' fullname='Larry Masinter'>
+<organization abbrev='Xerox'>Xerox Corporation</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>3333 Coyote Hill Road</street>
+<city>Palo Alto</city>
+<region>CA</region>
+<code>94034</code></postal>
+<email>masinter@parc.xerox.com</email></address></author>
+<author initials='P.' surname='Leach' fullname='Paul J. Leach'>
+<organization abbrev='Microsoft'>Microsoft Corporation</organization>
+<address>
+<postal>
+<street>1 Microsoft Way</street>
+<city>Redmond</city>
+<region>WA</region>
+<code>98052</code></postal>
+<email>paulle@microsoft.com</email></address></author>
+<author initials='T.' surname='Berners-Lee' fullname='Tim Berners-Lee'>
+<organization abbrev='MIT/LCS'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>timbl@w3.org</email></address></author>
+<date year='1999' month='June' />
+<abstract>
+<t>
+   The Hypertext Transfer Protocol (HTTP) is an application-level
+   protocol for distributed, collaborative, hypermedia information
+   systems. It is a generic, stateless, protocol which can be used for
+   many tasks beyond its use for hypertext, such as name servers and
+   distributed object management systems, through extension of its
+   request methods, error codes and headers . A feature of HTTP is
+   the typing and negotiation of data representation, allowing systems
+   to be built independently of the data being transferred.
+</t>
+<t>
+   HTTP has been in use by the World-Wide Web global information
+   initiative since 1990. This specification defines the protocol
+   referred to as "HTTP/1.1", and is an update to RFC 2068 .
+</t></abstract></front>
+
+<seriesInfo name='RFC' value='2616' />
+<format type='TXT' octets='422317' target='ftp://ftp.isi.edu/in-notes/rfc2616.txt' />
+<format type='PS' octets='5529857' target='ftp://ftp.isi.edu/in-notes/rfc2616.ps' />
+<format type='PDF' octets='550558' target='ftp://ftp.isi.edu/in-notes/rfc2616.pdf' />
+<format type='HTML' octets='528063' target='http://xml.resource.org/public/rfc/html/rfc2616.html' />
+<format type='XML' octets='476536' target='http://xml.resource.org/public/rfc/xml/rfc2616.xml' />
+</reference>
+
+
+<reference anchor='I-D.kucherawy-sender-auth-header'>
+<front>
+<title>Message Header for Indicating Sender Authentication Status</title>
+
+<author initials='M' surname='Kucherawy' fullname='Murray  Kucherawy'>
+    <organization />
+</author>
+
+<date month='May' day='5' year='2005' />
+
+<abstract><t>This memo defines a new message header for use with [MAIL] messages to indicate the results of sender authentication efforts to mail user agents (MUAs) in order to equip them to relay that information in a convenient way to users.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-kucherawy-sender-auth-header-02' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-kucherawy-sender-auth-header-02.txt' />
+</reference>
+
+<reference anchor='RFC2046'>
+
+<front>
+<title abbrev='Media Types'>Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types</title>
+<author initials='N.' surname='Freed' fullname='Ned Freed'>
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<city>West Covina</city>
+<region>CA</region>
+<code>91790</code>
+<country>US</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials='N.' surname='Borenstein' fullname='Nathaniel S. Borenstein'>
+<organization>First Virtual Holdings</organization>
+<address>
+<postal>
+<street>25 Washington Avenue</street>
+<city>Morristown</city>
+<region>NJ</region>
+<code>07960</code>
+<country>US</country></postal>
+<phone>+1 201 540 8967</phone>
+<facsimile>+1 201 993 3032</facsimile>
+<email>nsb@nsb.fv.com</email></address></author>
+<date year='1996' month='November' />
+<abstract>
+<t>STD 11, RFC 822 defines a message representation protocol specifying considerable detail about US-ASCII message headers, but which leaves the message content, or message body, as flat US-ASCII text.  This set of documents, collectively called the Multipurpose Internet Mail Extensions, or MIME, redefines the format of messages to allow for</t>
+<t>(1)   textual message bodies in character sets other than US-ASCII,</t>
+<t>(2)   an extensible set of different formats for non-textual message bodies,</t>
+<t>(3)   multi-part message bodies, and</t>
+<t>(4)   textual header information in character sets other than US-ASCII.</t>
+<t>These documents are based on earlier work documented in RFC 934, STD 11 and RFC 1049, but extends and revises them.  Because RFC 822 said so little about message bodies, these documents are largely orthogonal to (rather than a revision of) RFC 822.</t>
+<t>The initial document in this set, RFC 2045, specifies the various headers used to describe the structure of MIME messages. This second document defines the general structure of the MIME media typing sytem and defines an initial set of media types. The third document, RFC 2047, describes extensions to RFC 822 to allow non-US-ASCII text data in Internet mail header fields. The fourth document, RFC 2048, specifies various IANA registration procedures for MIME-related facilities.  The fifth and final document, RFC 2049, describes MIME
+   conformance criteria as well as providing some illustrative examples of MIME message formats, acknowledgements, and the bibliography.</t>
+<t>These documents are revisions of RFCs 1521 and 1522, which themselves were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049 describes differences and changes from previous versions.</t></abstract></front>
+
+<seriesInfo name='RFC' value='2046' />
+<format type='TXT' octets='105854' target='ftp://ftp.isi.edu/in-notes/rfc2046.txt' />
+</reference>
+
+<reference anchor='RFC2373'>
+
+<front>
+<title abbrev='IPv6 Addressing'>IP Version 6 Addressing Architecture</title>
+<author initials='R.M.' surname='Hinden' fullname='Robert M. Hinden'>
+<organization>Nokia</organization>
+<address>
+<postal>
+<street>232 Java Drive</street>
+<street>Sunnyvale</street>
+<street>CA 94089</street>
+<country>USA</country></postal>
+<phone>+1 408 990-2004</phone>
+<facsimile>+1 408 743-5677</facsimile>
+<email>hinden@iprg.nokia.com</email></address></author>
+<author initials='S.E.' surname='Deering' fullname='Stephen E. Deering'>
+<organization>Cisco Systems, Inc.</organization>
+<address>
+<postal>
+<street>170 West Tasman Drive</street>
+<street>San Jose</street>
+<street>CA 95134-1706</street>
+<country>USA</country></postal>
+<phone>+1 408 527-8213</phone>
+<facsimile>+1 408 527-8254</facsimile>
+<email>deering@cisco.com</email></address></author>
+<date year='1998' month='July' />
+<area>Internet</area>
+<keyword>internet protocol version 6</keyword>
+<keyword>IPv6</keyword>
+<keyword>addressing</keyword>
+<keyword>multicast</keyword>
+<abstract>
+<t>
+   This specification defines the addressing architecture of the IP
+   Version 6 protocol .  The document includes the IPv6 addressing
+   model, text representations of IPv6 addresses, definition of IPv6
+   unicast addresses, anycast addresses, and multicast addresses, and an
+   IPv6 node&apos;s required addresses.
+</t></abstract></front>
+
+<seriesInfo name='RFC' value='2373' />
+<format type='TXT' octets='52526' target='ftp://ftp.isi.edu/in-notes/rfc2373.txt' />
+<format type='HTML' octets='67709' target='http://xml.resource.org/public/rfc/html/rfc2373.html' />
+<format type='XML' octets='54927' target='http://xml.resource.org/public/rfc/xml/rfc2373.xml' />
+</reference>
+
+
+<reference anchor='RFC2119'>
+
+<front>
+<title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
+<author initials='S.' surname='Bradner' fullname='Scott Bradner'>
+<organization>Harvard University</organization>
+<address>
+<postal>
+<street>1350 Mass. Ave.</street>
+<street>Cambridge</street>
+<street>MA 02138</street></postal>
+<phone>- +1 617 495 3864</phone>
+<email>sob@harvard.edu</email></address></author>
+<date year='1997' month='March' />
+<area>General</area>
+<keyword>keyword</keyword>
+<abstract>
+<t>
+   In many standards track documents several words are used to signify
+   the requirements in the specification.  These words are often
+   capitalized.  This document defines these words as they should be
+   interpreted in IETF documents.  Authors who follow these guidelines
+   should incorporate this phrase near the beginning of their document:
+
+<list>
+<t>
+      The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
+      NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;,  &quot;MAY&quot;, and
+      &quot;OPTIONAL&quot; in this document are to be interpreted as described in
+      RFC 2119.
+</t></list></t>
+<t>
+   Note that the force of these words is modified by the requirement
+   level of the document in which they are used.
+</t></abstract></front>
+
+<seriesInfo name='BCP' value='14' />
+<seriesInfo name='RFC' value='2119' />
+<format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
+<format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
+<format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
+</reference>
+
+<reference anchor='RFC2822'>
+
+<front>
+<title>Internet Message Format</title>
+<author initials='P.' surname='Resnick' fullname='P. Resnick'>
+<organization /></author>
+<date year='2001' month='April' /></front>
+
+<seriesInfo name='RFC' value='2822' />
+<format type='TXT' octets='110695' target='ftp://ftp.isi.edu/in-notes/rfc2822.txt' />
+</reference>
+
+<reference anchor='RFC3462'>
+
+<front>
+<title>The Multipart/Report Content Type for the Reporting of Mail System Administrative Messages</title>
+<author initials='G.' surname='Vaudreuil' fullname='G. Vaudreuil'>
+<organization /></author>
+<date year='2003' month='January' /></front>
+
+<seriesInfo name='RFC' value='3462' />
+<format type='TXT' octets='12186' target='ftp://ftp.isi.edu/in-notes/rfc3462.txt' />
+</reference>
+
+
+
+</references>
+<references title="Informative References">
+
+<reference anchor='RFC2396'>
+
+<front>
+<title abbrev='URI Generic Syntax'>Uniform Resource Identifiers (URI): Generic Syntax</title>
+<author initials='T.' surname='Berners-Lee' fullname='Tim Berners-Lee'>
+<organization abbrev='MIT/LCS'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>timbl@w3.org</email></address></author>
+<author initials='R.T.' surname='Fielding' fullname='Roy T. Fielding'>
+<organization abbrev='U.C. Irvine'>Department of Information and Computer Science</organization>
+<address>
+<postal>
+<street>University of California, Irvine</street>
+<city>Irvine</city>
+<region>CA</region>
+<code>92697-3425</code></postal>
+<facsimile>+1(949)824-1715</facsimile>
+<email>fielding@ics.uci.edu</email></address></author>
+<author initials='L.' surname='Masinter' fullname='Larry Masinter'>
+<organization abbrev='Xerox Corporation'>Xerox PARC</organization>
+<address>
+<postal>
+<street>3333 Coyote Hill Road</street>
+<city>Palo Alto</city>
+<region>CA</region>
+<code>94034</code></postal>
+<facsimile>+1(415)812-4333</facsimile>
+<email>masinter@parc.xerox.com</email></address></author>
+<date year='1998' month='August'></date>
+<area>Applications</area>
+<keyword>uniform resource</keyword>
+<keyword>URI</keyword>
+<abstract>
+<t>
+   A Uniform Resource Identifier (URI) is a compact string of characters
+   for identifying an abstract or physical resource.  This document
+   defines the generic syntax of URI, including both absolute and
+   relative forms, and guidelines for their use; it revises and replaces
+   the generic definitions in RFC 1738 and RFC 1808.
+</t>
+<t>
+   This document defines a grammar that is a superset of all valid URI,
+   such that an implementation can parse the common components of a URI
+   reference without knowing the scheme-specific requirements of every
+   possible identifier type.  This document does not define a generative
+   grammar for URI; that task will be performed by the individual
+   specifications of each URI scheme.
+</t></abstract>
+<note title='IESG Note'>
+<t>
+   This paper describes a "superset" of operations that can be applied
+   to URI.  It consists of both a grammar and a description of basic
+   functionality for URI.  To understand what is a valid URI, both the
+   grammar and the associated description have to be studied.  Some of
+   the functionality described is not applicable to all URI schemes, and
+   some operations are only possible when certain media types are
+   retrieved using the URI, regardless of the scheme used.
+</t></note></front>
+
+<seriesInfo name='RFC' value='2396' />
+<format type='TXT' octets='83639' target='ftp://ftp.isi.edu/in-notes/rfc2396.txt' />
+<format type='HTML' octets='116376' target='http://xml.resource.org/public/rfc/html/rfc2396.html' />
+<format type='XML' octets='95830' target='http://xml.resource.org/public/rfc/xml/rfc2396.xml' />
+</reference>
+
+<reference anchor='RFC0822'>
+
+<front>
+<title abbrev='Standard for ARPA Internet Text Messages'>Standard for the format of ARPA Internet text messages</title>
+<author initials='D.H.' surname='Crocker' fullname='David H. Crocker'>
+<organization>University of Delaware, Dept. of Electrical Engineering</organization>
+<address>
+<postal>
+<street />
+<city>Newark</city>
+<region>DE</region>
+<code>19711</code>
+<country>US</country></postal>
+<email>DCrocker@UDel-Relay</email></address></author>
+<date year='1982' day='13' month='August' /></front>
+
+<seriesInfo name='STD' value='11' />
+<seriesInfo name='RFC' value='822' />
+<format type='TXT' octets='109200' target='ftp://ftp.isi.edu/in-notes/rfc822.txt' />
+</reference>
+
+
+<reference anchor='RFC2048'>
+<front>
+<title abbrev='MIME Registration Procedures'>Multipurpose Internet Mail Extensions (MIME) Part Four: Registration Procedures</title>
+<author initials='N.' surname='Freed' fullname='Ned Freed'>
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<street>West Covina</street>
+<street>CA 91790</street>
+<country>USA</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials='J.' surname='Klensin' fullname='John Klensin'>
+<organization>MCI</organization>
+<address>
+<postal>
+<street>2100 Reston Parkway</street>
+<street>Reston</street>
+<street>VA 22091</street></postal>
+<phone>+1 703 715-7361</phone>
+<facsimile>+1 703 715-7436</facsimile>
+<email>klensin@mci.net</email></address></author>
+<author initials='J.' surname='Postel' fullname='Jon Postel'>
+<organization>USC/Information Sciences Institute</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<street>Marina del Rey</street>
+<street>CA  90292</street>
+<country>USA</country></postal>
+<phone>+1 310 822 1511</phone>
+<facsimile>+1 310 823 6714</facsimile>
+<email>Postel@ISI.EDU</email></address></author>
+<date year='1996' month='November' />
+<area>Applications</area>
+<keyword>mail</keyword>
+<keyword>media type</keyword>
+<keyword>multipurpose internet mail extensions</keyword>
+<abstract>
+<t>
+   STD 11, RFC 822, defines a message representation protocol specifying
+   considerable detail about US-ASCII message headers, and leaves the
+   message content, or message body, as flat US-ASCII text.  This set of
+   documents, collectively called the Multipurpose Internet Mail
+   Extensions, or MIME, redefines the format of messages to allow for
+
+<list>
+<t>
+    (1)   textual message bodies in character sets other than
+          US-ASCII,
+</t>
+<t>
+    (2)   an extensible set of different formats for non-textual
+          message bodies,
+</t>
+<t>
+    (3)   multi-part message bodies, and
+</t>
+<t>
+    (4)   textual header information in character sets other than
+          US-ASCII.
+</t></list></t>
+<t>
+   These documents are based on earlier work documented in RFC 934, STD
+   11, and RFC 1049, but extends and revises them.  Because RFC 822 said
+   so little about message bodies, these documents are largely
+   orthogonal to (rather than a revision of) RFC 822.
+   This fourth document, RFC 2048, specifies various IANA registration
+   procedures for the following MIME facilities:
+
+<list>
+<t>
+    (1)   media types,
+</t>
+<t>
+    (2)   external body access types,
+</t>
+<t>
+    (3)   content-transfer-encodings.
+</t></list></t>
+<t>
+   Registration of character sets for use in MIME is covered elsewhere
+   and is no longer addressed by this document.
+</t>
+<t>
+   These documents are revisions of RFCs 1521 and 1522, which themselves
+   were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049
+   describes differences and changes from previous versions.
+</t></abstract></front>
+
+<seriesInfo name='BCP' value='13' />
+<seriesInfo name='RFC' value='2048' />
+<format type='TXT' octets='45033' target='ftp://ftp.isi.edu/in-notes/rfc2048.txt' />
+<format type='HTML' octets='54732' target='http://xml.resource.org/public/rfc/html/rfc2048.html' />
+<format type='XML' octets='43342' target='http://xml.resource.org/public/rfc/xml/rfc2048.xml' />
+</reference>
+
+<reference anchor='STRADS_BCP' target="http://www.tmisnet.com/~strads/spam/bcp.html">
+	<front>
+		<title>Proposed Spam Reporting BCP Document</title>
+		<author initials='G.' surname='Crissman' fullname=' George Crissman'>
+			<organization>news.admin.net-abuse.email</organization>
+			<address>
+				<postal/>
+				<email>strads@excite.com</email>
+				<uri>http://www.tmisnet.com/~strads/</uri>
+			</address>
+		</author>
+		<date year='2005' month="May" day="13"/>
+	</front>
+	<format type='HTML' target='http://www.tmisnet.com/~strads/spam/bcp.html'/>
+</reference>
+
+<reference anchor='ASRG_ABUSE' target="http://asrg.sp.am/subgroups/abuse_reports.shtml">
+	<front>
+		<title>Abuse Reporting Standards Subgroup of the ASRG</title>
+		<author>
+			<organization>Anti-Spam Research Group (ASRG) of the Internet Research Task Force (IRTF)</organization>
+			<address>
+				<postal/>
+				<email/>
+				<uri>http://asrg.sp.am</uri>
+			</address>
+		</author>
+		<date year='2005' month="May" day="13"/>
+	</front>
+	<format type='HTML' target='http://asrg.sp.am/subgroups/abuse_reports.shtml'/>
+</reference>
+
+</references>
+
+<section anchor="appendix" title="Appendix A - Sample Feedback Reports">
+
+<section title="Simple Report for Email Abuse without Optional Headers">
+<t><figure><artwork>
+From: &lt;abusedesk@example.com&gt;
+Date: Thu, 8 Mar 2005 17:40:36 EDT
+Subject: FW: Earn money
+To: &lt;abuse@example.net&gt;
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report; boundary="part1_13d.2e68ed54_boundary"
+
+--part1_13d.2e68ed54_boundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message received from IP 10.67.41.167 on Thu, 8 Mar 2005 14:00:00 EDT.
+For more information about this format please see http://www.mipassoc.org/arf/.
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+User-Agent: SomeGenerator/1.0
+Version: 0.1
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/rfc822
+Content-Disposition: inline
+
+From: &lt;somespammer@example.net&gt;
+Received: from mailserver.example.net (mailserver.example.net [10.67.41.167])
+	  by example.com with ESMTP id M63d4137594e46; Thu, 08 Mar 2005 14:00:00 -0400
+To: &lt;Undisclosed Recipients&gt;
+Subject: Earn money
+MIME-Version: 1.0
+Content-type: text/plain
+Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Date: Thu, 02 Sep 2004 12:31:03 -0500
+
+Spam Spam Spam 
+Spam Spam Spam
+Spam Spam Spam
+Spam Spam Spam
+--part1_13d.2e68ed54_boundary--
+</artwork></figure>
+</t>
+</section>
+
+<section title="Opt-Out Report without Message Body">
+<t><figure><artwork>
+From: &lt;abusedesk@example.com&gt;
+Date: Thu, 8 Mar 2005 17:40:36 EDT
+Subject: FW: Earn money
+To: &lt;abuse@example.net&gt;
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report; boundary="part1_13d.2e68ed54_boundary"
+
+--part1_13d.2e68ed54_boundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an opt-out report for an email message received from IP 10.67.41.167 on Thu, 8 Mar 2005 14:00:00 EDT.
+For more information about this format please see http://www.mipassoc.org/arf/.
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/feedback-report
+
+Feedback-Type: opt-out
+User-Agent: SomeGenerator/1.0
+Version: 0.1
+Removal-Recipient: user@example.com
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/rfc822-headers
+Content-Disposition: inline
+
+From: &lt;somespammer@example.net&gt;
+Received: from mailserver.example.net (mailserver.example.net [10.67.41.167])
+	  by example.com with ESMTP id M63d4137594e46; Thu, 08 Mar 2005 14:00:00 -0400
+To: &lt;Undisclosed Recipients&gt;
+Subject: Earn money
+MIME-Version: 1.0
+Content-type: text/plain
+Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Date: Thu, 02 Sep 2004 12:31:03 -0500
+--part1_13d.2e68ed54_boundary--
+</artwork></figure>
+</t>
+</section>
+
+<section title="Full Report for Email Abuse with All Headers">
+<t><figure><artwork>
+From: &lt;abusedesk@example.com&gt;
+Date: Thu, 8 Mar 2005 17:40:36 EDT
+Subject: FW: Earn money
+To: &lt;abuse@example.net&gt;
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report; boundary="part1_13d.2e68ed54_boundary"
+
+--part1_13d.2e68ed54_boundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message received from IP 10.67.41.167 on Thu, 8 Mar 2005 14:00:00 EDT.
+For more information about this format please see http://www.mipassoc.org/arf/.
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+User-Agent: SomeGenerator/1.0
+Version: 0.1
+Original-Mail-From: &lt;somespammer@example.net&gt;
+Original-Rcpt-To: &lt;user@example.com&gt;
+Received-Date: Thu, 8 Mar 2005 14:00:00 EDT
+Source-IP: 10.67.41.167
+Authentication-Results: mail.example.com
+               smtp.mail=somespammer@example.com;
+               spf=fail
+Reported-Domain: example.net
+Reported-Uri: http://example.net/earn_money.html
+Reported-Uri: mailto:user@example.com
+Removal-Recipient: user@example.com
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/rfc822
+Content-Disposition: inline
+
+From: &lt;somespammer@example.net&gt;
+Received: from mailserver.example.net (mailserver.example.net [10.67.41.167])
+	  by example.com with ESMTP id M63d4137594e46; Thu, 08 Mar 2005 14:00:00 -0400
+To: &lt;Undisclosed Recipients&gt;
+Subject: Earn money
+MIME-Version: 1.0
+Content-type: text/plain
+Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Date: Thu, 02 Sep 2004 12:31:03 -0500
+
+Spam Spam Spam 
+Spam Spam Spam
+Spam Spam Spam
+Spam Spam Spam
+--part1_13d.2e68ed54_boundary--
+</artwork></figure>
+</t>
+</section>
+
+</section>
+
+<section anchor="status" title="Status of This Document [To Be Removed Upon Publication]">
+	<section title="Discussion Venue">
+	<t>Discussion about this document should be directed to the ABUSE-FEEDBACK-REPORT mailing list <eref target="http://mipassoc.org/mailman/listinfo/abuse-feedback-report"/>
+	which is also reachable via <eref target="mailto:abuse-feedback-report@mipassoc.org"/>. Of course, comments directly to the author are always welcome (you can send them via email to <eref target="ietf@shaftek.org"/>).
+	</t>
+	</section>
+
+	<section title="Document Repository and Public Website">
+	<t>Copies of this and earlier versions including multiple formats can be found at 
+	<eref target="http://www.shaftek.org/publications/drafts/abuse-report/"/>. A public website regarding this draft and related efforts is located at <eref target="http://mipassoc.org/arf/"/>.
+	</t>
+	</section>
+
+	<section title="Document History">
+	<t>Changes from draft-shafranovich-feedback-report-01-pre1 to draft-shafranovich-feedback-report-01:
+	<list style="symbols">
+		<t>Added an "Outstanding Issues" section.</t>
+		<t>Minor spelling mistakes and clarifications.</t>
+		<t>Added links to previous work and more examples.</t>
+		<t>Added three new types: "fraud" for phishing, "opt-out-list" for a single list opt out, and "other" as a catch-all.</t>
+	</list>
+	</t>
+	<t>Changes from draft-shafranovich-feedback-report-00 to draft-shafranovich-feedback-report-01-pre1:
+	<list style="symbols">
+		<t>Changed the introduction section to clarify specific points that are out of scope for this document</t>
+		<t>Added pointers to a public mailing list for discussion and public web page</t>
+		<t>Clarified the intent section and added some extra points to it</t>
+		<t>Added a reference to RFC 2119 and changed the document to comply</t>
+		<t>Made it clear that the requirements section) is not the one defining the standard</t>
+		<t>Clarified the main format section to make all three parts mandatory</t>
+		<t>Changed section 4f regarding subject lines to mandate that subject lines should be left intact. Removed the convention for subject lines that was defined in the previous version</t>
+		<t>Added text to the the machine readable section clarifying its intent. Also added RFC 2119 references, reorganized fields, indicated whether specific header fields can appear more than once and provided references as to how they should be formatted.</t>
+		<t>Removed "Original-Message-ID", "Authenticated-Domain:" and "Authenticated-Domain-Method" from the draft including related IANA registries. Added "Version", "User-Agent", Original-Mail-From", "Original-Rcpt-To", "Reported-Uri", "Reported-Domain" and "Authentication-Results".</t>
+		<t>Example has been updated to reflect new headers.</t>
+		<t>Added a new section on extensibility and changed the IANA section to reflect that.</t>
+	</list>
+	</t>
+	<t>Changes from draft-shafranovich-abuse-report-00 to draft-shafranovich-feedback-report-00:
+	<list style="symbols">
+		<t>Name of the format and report changed to 'feedback-report'</t>
+		<t>Minor spelling corrections</t>
+		<t>Added authentication headers and registry</t>
+		<t>Added feedback-type header and registry.</t>
+	</list>
+	</t>
+	</section>
+	
+	<section title="Outstanding Issues">
+	<t>Here is a list of some outstanding issues for this document that have not been finalized:
+	<list style="symbols">
+		<t>Whether encoding of the machine readable part should be limited to 7-bit</t>
+		<t>Whether there is a need for both "opt-out" and "opt-out-list", and whether this format should be used for opt-outs at all.</t>
+		<t>Whether the "from" address should be required to be a human just like other RFCs in the "message/report" family.</t>
+		<t>Whether there is a need for a new header to indicate munging of the included email message.</t>
+		<t>Whether different type of convention should be allowed for subject lines.</t>
+		<t>Whether there should be different types defined for "Reported-Uri" to better indicate to the report receiver how they are related to the email message in question.</t>
+	</list>
+	</t>
+	</section>	
+</section>
+
+</back>
+</rfc>
+

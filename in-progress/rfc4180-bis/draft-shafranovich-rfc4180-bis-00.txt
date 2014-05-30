@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<!-- may be omitted for very short documents -->
+<?rfc toc="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc symrefs="yes"?>
+<!-- these two save paper: start new sections from the same page etc. -->
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<!-- other categories: bcp, exp, historic, std -->
+<rfc ipr="trust200902" category="info" docName="draft-shafranovich-rfc4180-bis-00.txt">
+
+<front>
+	<title abbrev="Format and MIME Type for CSV">Common Format and MIME Type for CSV Files</title>
+	<author fullname="Yakov Shafranovich" initials="Y." surname="Shafranovich">
+		<organization>BioFortis, Inc.</organization>
+		<address>			
+			<postal>
+				<street>10320 Little Patuxent Parkway, Suite 410</street>
+				<city>Columbia</city>
+				<region>MD</region>
+				<code>21044</code>
+				<country>US</country>
+			</postal>
+			<phone>+1 443 276-2464</phone>
+			<email>ietf@shaftek.org</email>
+		</address>
+	</author>
+	<date month="May" year="2014"/>
+	<keyword>CSV</keyword>
+	<keyword>MIME</keyword>
+	<keyword>comma separated</keyword>
+
+	<abstract>
+		<t> This draft documents the format used for Comma-Separated Values (CSV)
+   files and registers the associated MIME type "text/csv".</t>
+	</abstract>
+</front>
+
+<middle>
+<section title="Introduction">
+	<t>The comma separated values format (CSV) has been used for exchanging and converting data between various spreadsheet
+	programs for quite some time.  Surprisingly, while this format is very common it has never been formally documented.  Additionally,
+	while the IANA MIME registration tree includes a registration for "text/tab-separated-values" type,
+	no MIME types have ever been registered with IANA for CSV.  At the same time, various programs and operating systems have begun
+	to use different MIME types for this format, many of which vary from system to system.  This document
+	seeks to document the format of comma separated values (CSV) files and to formally register the "text/csv" MIME type 
+	for CSV in accordance with <xref target="RFC2048">RFC 2048</xref>.
+	</t>
+</section>
+
+<section anchor="format" title="Definition of the CSV format">
+	<t>While there are various specifications and implementations for the CSV format (for ex. <xref target="CREATIVYST"/>,
+	<xref target="EDOCEO"/>, <xref target="RICE"/> and <xref target="ART"/>), no formal specification exists which causes
+	a wide variety of interpretations for CSV files.  This section seeks to document the format that seems
+	to be followed by most implementations:
+		<list style="numbers">
+			<t>Each record is located on a separate line delimited by a line break (CRLF). For example:
+				<vspace blankLines="1"/>
+				aaa,bbb,ccc CRLF<vspace blankLines="0"/>	
+				zzz,yyy,xxx CRLF
+			</t>
+			<t>The last record in the file may or may not have an ending line break.  For example:
+				<vspace blankLines="1"/>
+				aaa,bbb,ccc CRLF<vspace blankLines="0"/>	
+				zzz,yyy,xxx
+			</t>
+			<t>There maybe an optional header line appearing as the first line of the file with the same format
+			as normal record lines.  This header will contain names corresponding to the fields in the file
+			and should contain the same number of fields as the records in the rest of the file (the presence or absence of the header line should be indicated via the optional "header" parameter of this MIME type).  For example:
+				<vspace blankLines="1"/>
+				field_name,field_name,field_name CRLF<vspace blankLines="0"/>
+				aaa,bbb,ccc CRLF<vspace blankLines="0"/>
+				zzz,yyy,xxx CRLF
+			</t>
+			<t>Within the header and each record there may be one or more fields, separated by commas.  Each line should contain the same number of fields throughout the file.  The last field in the record may not be followed by a comma.  For example:
+				<vspace blankLines="1"/>
+				aaa,bbb,ccc
+			</t>
+			<t>Each field may or may not be enclosed in double quotes (however some programs such as Microsoft Excel
+			do not use double quotes at all). If fields are not enclosed with double quotes, then double quotes may not appear inside the fields.  For example:
+				<vspace blankLines="1"/>
+				"aaa","bbb","ccc" CRLF<vspace blankLines="0"/>	
+				zzz,yyy,xxx
+			</t>
+			<t>Field containing line breaks (CRLF), double quotes and commas should be enclosed in double-quotes.  For example:
+				<vspace blankLines="1"/>
+				"aaa","b CRLF<vspace blankLines="0"/>	
+				bb","ccc" CRLF<vspace blankLines="0"/>	
+				zzz,yyy,xxx
+			</t>
+			<t>If double-quotes are used to enclosed fields, then a double-quote appearing inside a field must be escaped by preceding it with another double quote.  For example:
+				<vspace blankLines="1"/>
+				"aaa","b""bb","ccc"
+			</t>
+		</list>
+	</t>
+	<t>The <xref target="RFC2234">ABNF grammar</xref> appears as follows:
+		<list style="empty">
+			<t>file = [header CRLF] record *(CRLF record) [CRLF]</t>
+			<t>header = name *(COMMA name)</t>
+			<t>record = field *(COMMA field)</t>
+			<t>name = field</t>
+			<t>field = (escaped / non-escaped)</t>
+			<t>escaped = DQUOTE *(TEXTDATA / COMMA / CR / LF / 2DQUOTE) DQUOTE</t>
+			<t>non-escaped = *TEXTDATA</t>
+			<t>COMMA = %x2C</t>
+			<t>CR = %x0D ;as per section 6.1 of <xref target="RFC2234">RFC 2234</xref></t>
+			<t>DQUOTE =  %x22 ;as per section 6.1 of <xref target="RFC2234">RFC 2234</xref></t>
+			<t>LF = %x0A ;as per section 6.1 of <xref target="RFC2234">RFC 2234</xref></t>
+     			<t>CRLF = CR LF ;as per section 6.1 of <xref target="RFC2234">RFC 2234</xref></t>
+			<t>TEXTDATA =  %x20-21 / %x23-2B / %x2D-7E</t>
+		</list>
+	</t>
+</section>
+
+<section anchor="registration" title="MIME Type Registration of text/csv">
+	<t>This section provides the media-type registration application (as 
+	per <xref target="RFC2048">RFC 2048</xref>, which will be submitted to IANA after IESG 
+	approval of this document.</t>
+
+	<t>To: ietf-types@iana.org</t>
+	<t>Subject: Registration of MIME media type text/csv</t>
+	<t>MIME media type name: text</t>
+	<t>MIME subtype name: csv</t>
+	<t>Required parameters: none</t>
+	<t>Optional parameters: charset, header
+		<list style="empty">
+			<t>Common usage of CSV is US-ASCII, but other character sets as defined by IANA for the "text"
+			tree may be used in conjuction with the "charset" parameter.</t>
+			<t>The "header" parameter indicates the presence or absence of the header line.  Valid values are "present" or "absent".  Implementators choosing not to use this parameter must make their own decisions as to whether the header line is present or absent.</t>
+		</list>
+	</t>
+	<t>Encoding considerations:
+		<list style="empty">	
+			<t>As per section 4.1.1. of <xref target="RFC2046">RFC 2046</xref>, this media type uses CRLF
+			to denote line breaks.  However, implementors should be aware that some implementations
+			may use other values.
+			</t>
+		</list>
+	</t>
+	<t>Security considerations:
+		<list style="empty">
+			<t>CSV files contain passive text data which should not pose any risks.  However, it is possible in theory
+			that malicious binary data maybe included in order to exploit potential buffer overruns in the program
+			processing CSV data.  Additionally, private data maybe shared via this format (which of course applies to
+			any text data).
+			</t>
+		</list>
+	</t>
+	<t>
+	Interoperability considerations:
+		<list style="empty">
+			<t>
+			Due to lack of a single specification there are considerable differences among different implementations.
+			Implementors should "be conservative in what you do,
+			be liberal in what you accept from others" (<xref target="RFC0793">RFC 793</xref>) when processing CSV files.  An attempt at a common definition can be found in <xref target="format"/>. 
+			</t>
+			<t>Implementations deciding not to use the optional "header" parameter must make their own decision as to whether the header is absent or present.</t>
+		</list>
+	</t>
+	<t>Published specification:
+		<list style="empty">
+			<t>While numerous private specifications exist for various programs and systems, there is no single "master" specification for this format.  An attempt at a common definition can be found in <xref target="format"/>.
+			</t>
+		</list>
+	</t>
+	<t>Applications which use this media type:
+		<list style="empty">
+			<t>Spreadsheet programs and various data conversion utilities</t>
+		</list>
+	</t>
+	<t>Additional information:
+		<list style="empty">
+			<t>Magic number(s): none</t>
+			<t>File extension(s): CSV</t>
+			<t>Macintosh File Type Code(s): TEXT</t>
+		</list>
+	</t>
+	<t>Person and email address to contact for further information:
+		<list style="empty">
+			<t>Yakov Shafranovich &lt;ietf@shaftek.org&gt;</t>
+		</list>
+	</t>
+	<t>Intended usage: COMMON</t>
+	<t>Author/Change controller: IESG</t>
+</section>
+
+<section title="IANA Considerations">
+	<t>After IESG approval, IANA is expected to register the MIME type "text/csv" using the application provided
+	in <xref target="registration"/> of this document.</t>
+</section>
+
+<section title="Security Considerations">
+	<t>See discussion above</t>
+</section>
+
+<section title="Acknowledgments">
+	<t>The author would like to thank Dave Crocker, Martin Duerst, Joel M. Halpern, Clyde Ingram, Graham Klyne, Bruce Lilly, Chris Lilley and members of the IESG for their helpful suggestions.  A special word of thanks to Dave for helping with the ABNF grammar.</t>
+	<t>The author would also like to thank Henrik Lefkowetz, Marshall Rose and the folks at xml.resource.org for providing many of the tools used for preparing RFCs and Internet drafts.</t>
+</section>
+
+</middle>
+<back>
+
+<!-- references split to informative and normative -->
+<references title="Normative References">
+<reference anchor="RFC2046">
+
+<front>
+<title abbrev="Media Types">Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types</title>
+<author initials="N." surname="Freed" fullname="Ned Freed">
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<city>West Covina</city>
+<region>CA</region>
+<code>91790</code>
+<country>US</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials="N." surname="Borenstein" fullname="Nathaniel S. Borenstein">
+<organization>First Virtual Holdings</organization>
+<address>
+<postal>
+<street>25 Washington Avenue</street>
+<city>Morristown</city>
+<region>NJ</region>
+<code>07960</code>
+<country>US</country></postal>
+<phone>+1 201 540 8967</phone>
+<facsimile>+1 201 993 3032</facsimile>
+<email>nsb@nsb.fv.com</email></address></author>
+<date year="1996" month="November"/>
+<abstract>
+<t>STD 11, RFC 822 defines a message representation protocol specifying considerable detail about US-ASCII message headers, but which leaves the message content, or message body, as flat US-ASCII text.  This set of documents, collectively called the Multipurpose Internet Mail Extensions, or MIME, redefines the format of messages to allow for</t>
+<t>(1)   textual message bodies in character sets other than US-ASCII,</t>
+<t>(2)   an extensible set of different formats for non-textual message bodies,</t>
+<t>(3)   multi-part message bodies, and</t>
+<t>(4)   textual header information in character sets other than US-ASCII.</t>
+<t>These documents are based on earlier work documented in RFC 934, STD 11 and RFC 1049, but extends and revises them.  Because RFC 822 said so little about message bodies, these documents are largely orthogonal to (rather than a revision of) RFC 822.</t>
+<t>The initial document in this set, RFC 2045, specifies the various headers used to describe the structure of MIME messages.  This second document defines the general structure of the MIME media typing sytem and defines an initial set of media types.  The third document, RFC 2047, describes extensions to RFC 822 to allow non-US-ASCII text data in Internet mail header fields.  The fourth document, RFC 2048, specifies various IANA registration procedures for MIME-related facilities.  The fifth and final document, RFC 2049, describes MIME
+   conformance criteria as well as providing some illustrative examples of MIME message formats, acknowledgements, and the bibliography.</t>
+<t>These documents are revisions of RFCs 1521 and 1522, which themselves were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049 describes differences and changes from previous versions.</t></abstract></front>
+
+<seriesInfo name="RFC" value="2046"/>
+<format type="TXT" octets="105854" target="ftp://ftp.isi.edu/in-notes/rfc2046.txt"/>
+</reference>
+
+<reference anchor="RFC2234">
+
+<front>
+<title abbrev="ABNF for Syntax Specifications">Augmented BNF for Syntax Specifications: ABNF</title>
+<author initials="D." surname="Crocker" fullname="David H. Crocker" role="editor">
+<organization>Internet Mail Consortium</organization>
+<address>
+<postal>
+<street>675 Spruce Dr.</street>
+<city>Sunnyvale</city>
+<region>CA</region>
+<code>94086</code>
+<country>US</country></postal>
+<phone>+1 408 246 8253</phone>
+<facsimile>+1 408 249 6205</facsimile>
+<email>dcrocker@imc.org</email></address></author>
+<author initials="P." surname="Overell" fullname="Paul Overell">
+<organization>Demon Internet Ltd.</organization>
+<address>
+<postal>
+<street>Dorking Business Park</street>
+<street>Dorking</street>
+<city>Surrey</city>
+<region>England</region>
+<code>RH4 1HN</code>
+<country>UK</country></postal>
+<email>paulo@turnpike.com</email></address></author>
+<date year="1997" month="November"/>
+<keyword>ABNF</keyword>
+<keyword>Augmented</keyword>
+<keyword>Backus-Naur</keyword>
+<keyword>Form</keyword>
+<keyword>electronic</keyword>
+<keyword>mail</keyword></front>
+
+<seriesInfo name="RFC" value="2234"/>
+<format type="TXT" octets="24265" target="ftp://ftp.isi.edu/in-notes/rfc2234.txt"/>
+<format type="HTML" octets="36695" target="http://xml.resource.org/public/rfc/html/rfc2234.html"/>
+<format type="XML" octets="24067" target="http://xml.resource.org/public/rfc/xml/rfc2234.xml"/>
+</reference>
+
+<reference anchor="RFC2048">
+<front>
+<title abbrev="MIME Registration Procedures">Multipurpose Internet Mail Extensions (MIME) Part Four: Registration Procedures</title>
+<author initials="N." surname="Freed" fullname="Ned Freed">
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<street>West Covina</street>
+<street>CA 91790</street>
+<country>USA</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials="J." surname="Klensin" fullname="John Klensin">
+<organization>MCI</organization>
+<address>
+<postal>
+<street>2100 Reston Parkway</street>
+<street>Reston</street>
+<street>VA 22091</street></postal>
+<phone>+1 703 715-7361</phone>
+<facsimile>+1 703 715-7436</facsimile>
+<email>klensin@mci.net</email></address></author>
+<author initials="J." surname="Postel" fullname="Jon Postel">
+<organization>USC/Information Sciences Institute</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<street>Marina del Rey</street>
+<street>CA  90292</street>
+<country>USA</country></postal>
+<phone>+1 310 822 1511</phone>
+<facsimile>+1 310 823 6714</facsimile>
+<email>Postel@ISI.EDU</email></address></author>
+<date year="1996" month="November"/>
+<area>Applications</area>
+<keyword>mail</keyword>
+<keyword>media type</keyword>
+<keyword>multipurpose internet mail extensions</keyword>
+<abstract>
+<t>
+   STD 11, RFC 822, defines a message representation protocol specifying
+   considerable detail about US-ASCII message headers, and leaves the
+   message content, or message body, as flat US-ASCII text.  This set of
+   documents, collectively called the Multipurpose Internet Mail
+   Extensions, or MIME, redefines the format of messages to allow for
+
+<list>
+<t>
+    (1)   textual message bodies in character sets other than
+          US-ASCII,
+</t>
+<t>
+    (2)   an extensible set of different formats for non-textual
+          message bodies,
+</t>
+<t>
+    (3)   multi-part message bodies, and
+</t>
+<t>
+    (4)   textual header information in character sets other than
+          US-ASCII.
+</t></list></t>
+<t>
+   These documents are based on earlier work documented in RFC 934, STD
+   11, and RFC 1049, but extends and revises them.  Because RFC 822 said
+   so little about message bodies, these documents are largely
+   orthogonal to (rather than a revision of) RFC 822.
+   This fourth document, RFC 2048, specifies various IANA registration
+   procedures for the following MIME facilities:
+
+<list>
+<t>
+    (1)   media types,
+</t>
+<t>
+    (2)   external body access types,
+</t>
+<t>
+    (3)   content-transfer-encodings.
+</t></list></t>
+<t>
+   Registration of character sets for use in MIME is covered elsewhere
+   and is no longer addressed by this document.
+</t>
+<t>
+   These documents are revisions of RFCs 1521 and 1522, which themselves
+   were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049
+   describes differences and changes from previous versions.
+</t></abstract></front>
+
+<seriesInfo name="BCP" value="13"/>
+<seriesInfo name="RFC" value="2048"/>
+<format type="TXT" octets="45033" target="ftp://ftp.isi.edu/in-notes/rfc2048.txt"/>
+<format type="HTML" octets="54732" target="http://xml.resource.org/public/rfc/html/rfc2048.html"/>
+<format type="XML" octets="43342" target="http://xml.resource.org/public/rfc/xml/rfc2048.xml"/>
+</reference>
+
+</references>
+<references title="Informative References">
+
+<reference anchor="RFC0793">
+
+<front>
+<title abbrev="Transmission Control Protocol">Transmission Control Protocol</title>
+<author initials="J." surname="Postel" fullname="Jon Postel">
+<organization>University of Southern California (USC)/Information Sciences Institute</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<city>Marina del Rey</city>
+<region>CA</region>
+<code>90291</code>
+<country>US</country></postal></address></author>
+<date year="1981" day="1" month="September"/></front>
+
+<seriesInfo name="STD" value="7"/>
+<seriesInfo name="RFC" value="793"/>
+<format type="TXT" octets="172710" target="ftp://ftp.isi.edu/in-notes/rfc793.txt"/>
+</reference>
+
+<reference anchor="CREATIVYST" target="http://www.creativyst.com/Doc/Articles/CSV/CSV01.htm">
+	<front>
+		<title>HOW-TO: The Comma Separated Value (CSV) File Format</title>
+		<author initials="J." surname="Repici" fullname="John Repici">
+			<organization>Creativyst, Inc.</organization>
+			<address>
+				<postal>
+					<street>120 Jefferson St.</street>
+					<street>Riverside</street>
+					<street>NJ 08075</street>
+					<country>USA</country>
+				</postal>
+				<phone>+1-856-764-5099</phone>
+				<uri>http://www.creativyst.com</uri>
+			</address>
+		</author>
+		<date year="2004"/>
+	</front>
+	<format type="HTML" target="http://www.creativyst.com/Doc/Articles/CSV/CSV01.htm"/>
+</reference>
+
+<reference anchor="EDOCEO" target="http://www.edoceo.com/utilis/csv-file-format.php">
+	<front>
+		<title>CSV Standard File Format</title>
+		<author>
+			<organization>Edoceo, Inc.</organization>
+			<address>
+				<postal>
+					<street>620 W. Olympic Pl. #206</street>
+					<street>Seatle</street>
+					<street>WA 98119</street>
+					<country>USA</country>
+				</postal>
+				<phone>+1-206-378-5619</phone>
+				<uri>http://www.edoceo.com</uri>
+			</address>
+		</author>
+		<date year="2004"/>
+	</front>
+	<format type="HTML" target="http://www.edoceo.com/utilis/csv-file-format.php"/>
+</reference>
+
+<reference anchor="ART" target="http://www.catb.org/~esr/writings/taoup/html/ch05s02.html">
+	<front>
+		<title>The Art of Unix Programming, Chapter 5</title>
+		<author initials="E." surname="Raymond" fullname="Eric S. Raymond">
+			<organization>Addison-Wesley</organization>
+			<address>
+				<postal/>
+				<email>esr@thyrsus.com</email>
+				<uri>http://www.catb.org/~esr/</uri>
+			</address>
+		</author>
+		<date year="2003" month="September" day="19"/>
+	</front>
+	<format type="HTML" target="http://www.catb.org/~esr/writings/taoup/html/ch05s02.html"/>
+</reference>
+
+<reference anchor="RICE" target="http://www.ricebridge.com/products/csvman/reference.htm">
+	<front>
+		<title>Documentation for Ricebridge CSV Manager</title>
+		<author initials="R." surname="Rodger" fullname="Richard Rodger"/>
+		<author initials="O." surname="Shanaghy" fullname="Orla Shanaghy">
+			<organization>Ricebridge</organization>
+			<address>
+				<postal>
+					<street>Waterford</street>
+					<country>Ireland</country>
+				</postal>
+			</address>
+		</author>
+		<date year="2005" month="February"/>
+	</front>
+	<format type="HTML" target="http://www.ricebridge.com/products/csvman/reference.htm"/>
+</reference>
+
+</references>
+
+<section anchor="status" title="Status of This Document [To Be Removed Upon Publication]">
+	<section title="Discussion Venue">
+	<t>Discussion about this document should be directed to the IETF apps-discuss mailing list <eref target="https://www.ietf.org/mailman/listinfo/apps-discuss/"/>
+	which is also reachable via <eref target="apps-discuss@ietf.org"/>. Of course, comments directly to the author are
+	always welcome.
+	</t>
+	</section>
+
+	<section title="Document History">
+	<t>Changes from RFC 4180 to draft-shafranovich-rfc4180-bis-00:
+	<list style="symbols">
+		<t>To be added</t>
+	</list>
+	</t>
+	</section>
+
+</section>
+</back>
+
+</rfc>

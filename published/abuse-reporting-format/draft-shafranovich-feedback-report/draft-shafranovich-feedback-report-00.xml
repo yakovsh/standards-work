@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM 'rfc2629.dtd']>
+
+<!-- may be omitted for very short documents --> 
+<?rfc toc="yes"?>
+<?rfc sortrefs="yes"?>
+
+<!-- these two save paper: start new sections from the same page etc. -->
+<?rfc compact="yes"?> <?rfc subcompact="no"?>
+
+<!-- other categories: bcp, exp, historic, std -->
+<rfc ipr="full3667" category="std" docName="draft-shafranovich-feedback-report-00.txt">
+
+<front>
+	<title abbrev="Format for Feedback Reports">An Extensible Format for Email Feedback Reports</title>
+	<author fullname="Yakov Shafranovich" initials="Y." surname="Shafranovich">
+		<organization>SolidMatrix Technologies, Inc.</organization>
+		<address>
+			<postal/>
+			<email>ietf@shaftek.org</email>
+			<uri>http://www.shaftek.org</uri>
+		</address>
+	</author>
+	<date month="March" year="2005"/>
+	<keyword>spam</keyword>
+	<keyword>abuse</keyword>
+
+	<abstract>
+		<t>This document defines an extensible format and MIME type that may be used by network operators to report
+		feedback about received email to other parties. This format is intended as a machine readable replacement for various existing report formats currently used in Internet email.</t>
+	</abstract>
+</front>
+
+<middle>
+<section title="Introduction">
+	<t>As the spam problem has grown in the past few years, network operators have begun to exchange abuse reports
+	among themselves and other parties to combat this problem. However, different operators define their own formats
+	and the receivers are forced to write custom software to interpret the many types of them. In addition, many operators use various other report formats to provide non-abuse feedback about processed email. This memo seeks to define a standard extensible format and the "message/feedback-report" MIME type for these reports
+	in accordance with <xref target="RFC2048">RFC 2048</xref>. This format and content type is intended to be used within
+	the scope of the framework of the "multipart/report" content type defined in <xref target="RFC3462">RFC 3462</xref>.
+	</t>
+
+	<t>This document only defines the format and content type to be used for these reports. Determination of where
+	these reports should be sent is outside the scope of this document.
+	</t>
+	
+	<t>NOTE: This document may be incomplete and is intented to evolve based on public discussion and feedback</t>
+</section>
+
+<section title="Intent">
+	<t>The reports defined in this document are intended for several purposes:
+	<list style="letters">	
+		<t>To inform ISPs about email abuse originating from their networks</t>
+		<t>To provide feedback to email service providers about abuse complaints</t>
+		<t>To inform the author of the message that the receiver wants to opt out.</t>
+	</list>
+	</t>
+
+	<t>Note that the reports defined in this document are limited to providing feedback about email only.</t>
+</section>
+
+<section title="Requirements">
+	<t>The following requirements are necessary for feedback reports :
+	<list style="letters">	
+		<t>They must be both human and machine readable</t>
+		<t>Copy of the original email message or email headers must be enclosed in order to allow the receiver
+		to properly handle the report.
+		</t>
+	</list>
+	</t>
+</section>
+
+<section title="Format of Email Feedback Reports">
+	<t>An email feedback report is a MIME message with a top level MIME content type of "multipart/report" (as defined
+	in <xref target="RFC3462">RFC 3462</xref>). The following apply:
+	<list style="letters">	
+		<t>The "report-type" parameter of "multipart/report" type is set to "feedback-report".</t>
+		<t>The first MIME part of the message contains a human readable description of the report</t>
+		<t>The second MIME part of the message contains a machine readable abuse report with the content type
+		of "message/feedback-report" (defined later on in this document).
+		</t>
+		<t>The third MIME part of the message contains either a full copy of the original message with a MIME content type
+		of "message/rfc822" (as defined in <xref target="RFC3462">RFC 2046</xref>) OR a copy of
+		the headers from the original message with MIME content type of "text/rfc822-headers"
+		(as defined in <xref target="RFC3462">RFC 3462</xref>).
+		</t>
+		<t>Each abuse report should related to a single originating message.</t>
+		<t>The subject line of the abuse report should read as "Email Feedback Report for IP X.X.X.X" where "X.X.X.X" is the source IP of the MTA from which the original message was received. If email authentication is used, the sender may substitute the text "for domain YYYYY.ZZZZ" where "YYYYY.ZZZZ" is the authenticated domain.
+		</t>
+		<t>It is preferable that all original email headers are included even though they are defined as optional in <xref target="RFC3462">RFC 3462</xref>.</t>
+	</list>
+	</t>
+</section>
+
+<section title="Format of 'message/feedback-report' Content Type">
+	<t>The message/feedback-report content type consists of several header fields as follows:
+	<list style="letters">	
+		<t>"Source-IP:" - contains an IPv4 or IPv6 address of the MTA from which the original message was received.</t>
+		<t>"Received-Date:" - date the original message was received. This field is formatted in according to the definition
+		in section 3.3 of <xref target="RFC2822">RFC 2822</xref>
+		</t>
+		<t>"Original-Message-ID:" - contains the <xref target="RFC2822">RFC 2822</xref> Message-ID of the original message</t>
+		<t>"Feedback-Type:" - contains the type of feedback as defined in the corresponding IANA registry.</t>
+		<t>"Authenticated-Domain:" and "Authenticated-Domain-Method:" - defines the authenticated domain and method used for perform that authentication. The list of method tokens is contained in the corresponding IANA registry. Note that the actual type of authentication used is outside the scope of this document.</t>
+	</list>
+	</t>
+</section>
+
+<section title="MIME Type Registration of message/feedback-report">
+	<t>This section provides the media type registration application (as 
+	per <xref target="RFC2048">RFC 2048</xref>, which will be submitted to IANA after IESG 
+	approval of this document.</t>
+
+	<t>To: ietf-types@iana.org</t>
+	<t>Subject: Registration of MIME media types message/feedback-report</t>
+	<t>MIME media type name: message</t>
+	<t>MIME subtype name: feedback-report</t>
+	<t>Required parameters: none</t>
+	<t>Optional parameters: none</t>	
+	<t>Encoding considerations:
+		<list style="empty">	
+			<t>"7bit" encoding is sufficient and MUST be used to maintain readability when viewed
+			by non-MIME mail readers.
+			</t>
+		</list>
+	</t>
+	<t>Security considerations:
+		<list style="empty">
+			<t>See section 3 of <xref target="RFC3462">RFC 3462</xref></t>
+		</list>
+	</t>
+	<t>Interoperability considerations: none</t>
+	<t>Published specification: this document</t>
+	<t>Applications which use this media type: Abuse helpdesk software for ISPs</t>
+	<t>Additional information:
+		<list style="empty">
+			<t>Magic number(s): none</t>
+			<t>File extension(s): none</t>
+			<t>Macintosh File Type Code(s): none</t>
+		</list>
+	</t>
+	<t>Person and email address to contact for further information:
+		<list style="empty">
+			<t>Yakov Shafranovich &lt;ietf@shaftek.org&gt;</t>
+		</list>
+	</t>
+	<t>Intended usage: COMMON</t>
+	<t>Author/Change controller: IESG</t>
+</section>
+
+<section title="IANA Considerations">
+	<t>After IESG approval, IANA is expected to register MIME type "message/feedback-report"
+	using the application provided in this document and setup two registries for "Feedback-Type" and "Authentication-Domain-Method" headers. Below are the initial values for these registries.</t>
+	<t>Initial values for the "Feedback-Type" registry:
+		<list style="empty">
+			<t>abuse - spam or some other kind of email abuse</t>
+			<t>opt-out - a request to opt out from a mailing list.</t>
+			<t>virus - report of a virus found in the originating message</t>
+		</list>
+	</t>
+	<t>Initial values for the "Authentication-Domain-Method" registry:
+		<list style="empty">
+			<t>domainkeys - as defined in <xref target="I-D.delany-domainkeys-base">delany-domainkeys-base</xref></t>
+			<t>iim - as defined in <xref target="I-D.fenton-identified-mail">fenton-identified-mail</xref></t>
+			<t>sender-id - as defined in <xref target="I-D.lyon-senderid-core">lyon-senderid-core</xref></t>
+			<t>spf - as defined in <xref target="I-D.schlitt-spf-classic">schlitt-spf-classic</xref></t>
+		</list>
+	</t>
+</section>
+
+<section title="Security Considerations">
+	<t>See section 3 of <xref target="RFC3462">RFC 3462</xref></t>
+</section>
+
+<section title="Acknowledgments">
+	<t>The author would like to thank many of the members of the email community who provided helpful comments and suggestions for this document including many of the participants in ASRG, IETF and MAAWG activities.</t>
+</section>
+
+</middle>
+<back>
+
+<!-- references split to informative and normative -->
+<references title="Normative References">
+<reference anchor='RFC2046'>
+
+<front>
+<title abbrev='Media Types'>Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types</title>
+<author initials='N.' surname='Freed' fullname='Ned Freed'>
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<city>West Covina</city>
+<region>CA</region>
+<code>91790</code>
+<country>US</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials='N.' surname='Borenstein' fullname='Nathaniel S. Borenstein'>
+<organization>First Virtual Holdings</organization>
+<address>
+<postal>
+<street>25 Washington Avenue</street>
+<city>Morristown</city>
+<region>NJ</region>
+<code>07960</code>
+<country>US</country></postal>
+<phone>+1 201 540 8967</phone>
+<facsimile>+1 201 993 3032</facsimile>
+<email>nsb@nsb.fv.com</email></address></author>
+<date year='1996' month='November' />
+<abstract>
+<t>STD 11, RFC 822 defines a message representation protocol specifying considerable detail about US-ASCII message headers, but which leaves the message content, or message body, as flat US-ASCII text.  This set of documents, collectively called the Multipurpose Internet Mail Extensions, or MIME, redefines the format of messages to allow for</t>
+<t>(1)   textual message bodies in character sets other than US-ASCII,</t>
+<t>(2)   an extensible set of different formats for non-textual message bodies,</t>
+<t>(3)   multi-part message bodies, and</t>
+<t>(4)   textual header information in character sets other than US-ASCII.</t>
+<t>These documents are based on earlier work documented in RFC 934, STD 11 and RFC 1049, but extends and revises them.  Because RFC 822 said so little about message bodies, these documents are largely orthogonal to (rather than a revision of) RFC 822.</t>
+<t>The initial document in this set, RFC 2045, specifies the various headers used to describe the structure of MIME messages. This second document defines the general structure of the MIME media typing sytem and defines an initial set of media types. The third document, RFC 2047, describes extensions to RFC 822 to allow non-US-ASCII text data in Internet mail header fields. The fourth document, RFC 2048, specifies various IANA registration procedures for MIME-related facilities.  The fifth and final document, RFC 2049, describes MIME
+   conformance criteria as well as providing some illustrative examples of MIME message formats, acknowledgements, and the bibliography.</t>
+<t>These documents are revisions of RFCs 1521 and 1522, which themselves were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049 describes differences and changes from previous versions.</t></abstract></front>
+
+<seriesInfo name='RFC' value='2046' />
+<format type='TXT' octets='105854' target='ftp://ftp.isi.edu/in-notes/rfc2046.txt' />
+</reference>
+
+<reference anchor='RFC2822'>
+
+<front>
+<title>Internet Message Format</title>
+<author initials='P.' surname='Resnick' fullname='P. Resnick'>
+<organization /></author>
+<date year='2001' month='April' /></front>
+
+<seriesInfo name='RFC' value='2822' />
+<format type='TXT' octets='110695' target='ftp://ftp.isi.edu/in-notes/rfc2822.txt' />
+</reference>
+
+<reference anchor='RFC3462'>
+
+<front>
+<title>The Multipart/Report Content Type for the Reporting of Mail System Administrative Messages</title>
+<author initials='G.' surname='Vaudreuil' fullname='G. Vaudreuil'>
+<organization /></author>
+<date year='2003' month='January' /></front>
+
+<seriesInfo name='RFC' value='3462' />
+<format type='TXT' octets='12186' target='ftp://ftp.isi.edu/in-notes/rfc3462.txt' />
+</reference>
+
+
+
+</references>
+<references title="Informative References">
+
+<reference anchor='I-D.schlitt-spf-classic'>
+<front>
+<title>Sender Policy Framework: Authorizing Use of Domains in E-MAIL</title>
+
+<author initials='M' surname='Wong' fullname='Meng Weng  Wong'>
+    <organization />
+</author>
+
+<date month='January' day='3' year='2005' />
+
+<abstract><t>E-mail on the Internet can be forged in a number of ways. In particular, existing protocols place no restriction in what a sending host can use as the reverse-path of a message. This document describes a protocol whereby a domain can explicitly authorize the hosts that are allowed to use its domain name in a reverse-path, and a way for receiving hosts to check such authorization.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-schlitt-spf-classic-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-schlitt-spf-classic-00.txt' />
+</reference>
+
+<reference anchor='I-D.delany-domainkeys-base'>
+<front>
+<title>Domain-based Email Authentication Using Public-Keys Advertised in the DNS  (DomainKeys)</title>
+
+<author initials='M' surname='Delany' fullname='Mark Delany'>
+    <organization />
+</author>
+
+<date month='March' day='28' year='2005' />
+
+<abstract><t>"DomainKeys" creates a domain-level authentication framework for email by using public-key technology and the DNS to prove the provenance and contents of an email. This document defines the base framework of digitally signing email on a per-domain basis. Subsequent documents leverage this base framework to prove and validate email delivery paths as well as extend signing to facilitate per-user authentication. The ultimate goal of this framework is to unequivocally prove and protect identity while retaining the semantics of Internet email as it is known today. Proof and protection of email identity may assist in the global control of "spam" and "phishing". While this document presents technical details, it is not yet intended as a definitive or final specification, rather, the intent is to define a framework and sufficient technical detail to promote experimental deployment with a view to evolving into a comprehensive authentication standard for email.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-delany-domainkeys-base-02' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-delany-domainkeys-base-02.txt' />
+</reference>
+
+<reference anchor='I-D.lyon-senderid-core'>
+<front>
+<title>Sender ID: Authenticating E-Mail</title>
+
+<author initials='J' surname='Lyon' fullname='Jim Lyon'>
+    <organization />
+</author>
+
+<date month='November' day='9' year='2004' />
+
+<abstract><t>Internet mail suffers from the fact that much unwanted mail is sent using spoofed addresses -- "spoofed" in this case means the address is used without the permission of the domain owner. This document describes a family of tests by which SMTP servers can determine whether an e-mail address in a received message was used with the permission of the owner of the domain contained in that e-mail address.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-lyon-senderid-core-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-lyon-senderid-core-00.txt' />
+</reference>
+
+<reference anchor='I-D.fenton-identified-mail'>
+<front>
+<title>Identified Internet Mail</title>
+
+<author initials='J' surname='Fenton' fullname='Jim Fenton'>
+    <organization />
+</author>
+
+<author initials='M' surname='Thomas' fullname='Michael Thomas'>
+    <organization />
+</author>
+
+<date month='October' day='15' year='2004' />
+
+<abstract><t>This document describes extensions to the format of electronic mail messages and a public-key infrastructure to permit verification of the source of messages by either mail transport agents (MTAs) or mail user agents (MUAs). This may be used to implement a policy which, for example, favors the delivery of identified messages over messages lacking signatures or having incorrect signatures. Mechanisms by which signing of messages and verification of signatures can be performed by a trusted MTA, in order to minimize impact on the user, are also presented.</t></abstract>
+
+</front>
+
+<seriesInfo name='Internet-Draft' value='draft-fenton-identified-mail-01' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-fenton-identified-mail-01.txt' />
+</reference>
+
+
+<reference anchor='RFC2048'>
+<front>
+<title abbrev='MIME Registration Procedures'>Multipurpose Internet Mail Extensions (MIME) Part Four: Registration Procedures</title>
+<author initials='N.' surname='Freed' fullname='Ned Freed'>
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 East Garvey Avenue South</street>
+<street>West Covina</street>
+<street>CA 91790</street>
+<country>USA</country></postal>
+<phone>+1 818 919 3600</phone>
+<facsimile>+1 818 919 3614</facsimile>
+<email>ned@innosoft.com</email></address></author>
+<author initials='J.' surname='Klensin' fullname='John Klensin'>
+<organization>MCI</organization>
+<address>
+<postal>
+<street>2100 Reston Parkway</street>
+<street>Reston</street>
+<street>VA 22091</street></postal>
+<phone>+1 703 715-7361</phone>
+<facsimile>+1 703 715-7436</facsimile>
+<email>klensin@mci.net</email></address></author>
+<author initials='J.' surname='Postel' fullname='Jon Postel'>
+<organization>USC/Information Sciences Institute</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<street>Marina del Rey</street>
+<street>CA  90292</street>
+<country>USA</country></postal>
+<phone>+1 310 822 1511</phone>
+<facsimile>+1 310 823 6714</facsimile>
+<email>Postel@ISI.EDU</email></address></author>
+<date year='1996' month='November' />
+<area>Applications</area>
+<keyword>mail</keyword>
+<keyword>media type</keyword>
+<keyword>multipurpose internet mail extensions</keyword>
+<abstract>
+<t>
+   STD 11, RFC 822, defines a message representation protocol specifying
+   considerable detail about US-ASCII message headers, and leaves the
+   message content, or message body, as flat US-ASCII text.  This set of
+   documents, collectively called the Multipurpose Internet Mail
+   Extensions, or MIME, redefines the format of messages to allow for
+
+<list>
+<t>
+    (1)   textual message bodies in character sets other than
+          US-ASCII,
+</t>
+<t>
+    (2)   an extensible set of different formats for non-textual
+          message bodies,
+</t>
+<t>
+    (3)   multi-part message bodies, and
+</t>
+<t>
+    (4)   textual header information in character sets other than
+          US-ASCII.
+</t></list></t>
+<t>
+   These documents are based on earlier work documented in RFC 934, STD
+   11, and RFC 1049, but extends and revises them.  Because RFC 822 said
+   so little about message bodies, these documents are largely
+   orthogonal to (rather than a revision of) RFC 822.
+   This fourth document, RFC 2048, specifies various IANA registration
+   procedures for the following MIME facilities:
+
+<list>
+<t>
+    (1)   media types,
+</t>
+<t>
+    (2)   external body access types,
+</t>
+<t>
+    (3)   content-transfer-encodings.
+</t></list></t>
+<t>
+   Registration of character sets for use in MIME is covered elsewhere
+   and is no longer addressed by this document.
+</t>
+<t>
+   These documents are revisions of RFCs 1521 and 1522, which themselves
+   were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049
+   describes differences and changes from previous versions.
+</t></abstract></front>
+
+<seriesInfo name='BCP' value='13' />
+<seriesInfo name='RFC' value='2048' />
+<format type='TXT' octets='45033' target='ftp://ftp.isi.edu/in-notes/rfc2048.txt' />
+<format type='HTML' octets='54732' target='http://xml.resource.org/public/rfc/html/rfc2048.html' />
+<format type='XML' octets='43342' target='http://xml.resource.org/public/rfc/xml/rfc2048.xml' />
+</reference></references>
+
+<section anchor="appendix" title="Appendix A - An Sample Abuse Report">
+<t><figure><artwork>
+From: &lt;abusedesk@example.com&gt;
+Date: Thu, 8 Mar 2005 17:40:36 EDT
+Subject: Email Abuse Report for IP 10.67.41.167
+To: &lt;abuse@example.net&gt;
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report; boundary="part1_13d.2e68ed54_boundary"
+
+--part1_13d.2e68ed54_boundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message received from IP 10.67.41.167 on Thu, 8 Mar 2005 14:00:00 EDT.
+
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/feedback-report
+
+Source-IP: 10.67.41.167
+Received-Date: Thu, 8 Mar 2005 14:00:00 EDT
+Original-Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Feedback-Type: abuse
+
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/rfc822
+Content-Disposition: inline
+
+From: &lt;somespammer@example.net&gt;
+Received: from mailserver.example.net (mailserver.example.net [10.67.41.167])
+	  by example.com with ESMTP id M63d4137594e46; Thu, 08 Mar 2005 14:00:00 -0400
+To: &lt;Undisclosed Recipients&gt;
+Subject: Earn money
+MIME-Version: 1.0
+Content-type: text/plain
+Message-ID: 8787KJKJ3K4J3K4J3K4J3.mail@example.net
+Date: Thu, 02 Sep 2004 12:31:03 -0500
+
+Spam Spam Spam 
+Spam Spam Spam
+Spam Spam Spam
+Spam Spam Spam
+--part1_13d.2e68ed54_boundary--
+</artwork></figure>
+</t>
+</section>
+
+<section anchor="status" title="Status of This Document [To Be Removed Upon Publication]">
+	<section title="Discussion Venue">
+	<t>Comments about this document should be sent directly to the author at via <eref target="ietf@shaftek.org"/>.</t>
+	</section>
+
+	<section title="Document Repository">
+	<t>Copies of this and earlier versions including multiple formats can be found at 
+	<eref target="http://www.shaftek.org/publications/drafts/abuse-report/"/>.
+	</t>
+	</section>
+	
+	<section title="Document History">
+	<t>Changes from draft-shafranovich-abuse-report-00 to draft-shafranovich-feedback-report-00:
+	<list style="symbols">
+		<t>Name of the format and report changed to 'feedback-report'</t>
+		<t>Minor spelling corrections</t>
+		<t>Added authentication headers and registry</t>
+		<t>Added feedback-type header and registry.</t>
+	</list>
+	</t>
+	</section>
+</section>
+
+</back>
+</rfc>
+

@@ -463,7 +463,6 @@
 		<author initials='E.' surname='Raymond' fullname='Eric S. Raymond'>
 			<organization>Addison-Wesley</organization>
 			<address>
-				<postal/>
 				<email>esr@thyrsus.com</email>
 				<uri>http://www.catb.org/~esr/</uri>
 			</address>
